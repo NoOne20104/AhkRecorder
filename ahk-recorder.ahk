@@ -1,11 +1,11 @@
-﻿#Requires AutoHotkey v2.0
+;ahkv2 macro recorder 
+
+#Requires AutoHotkey v2.0
 #SingleInstance Force
 Persistent()
 CoordMode("Mouse", "Screen")
 
-; =========================
-; STATE
-; =========================
+;state
 recording := false
 playing   := false
 stopPlay  := false
@@ -13,37 +13,34 @@ events := []
 lastTime := 0
 ih := 0
 
-; smart mouse movement recording
+;mouse movment recording
 lastMX := 0
 lastMY := 0
-moveThreshold := 5     ; px (record only if moved >= threshold)
-moveInterval  := 25    ; ms (sampling interval)
+moveThreshold := 5    
+moveInterval  := 25   
 
-; =========================
-; HUMANIZATION SETTINGS
-; =========================
+
 humanize := false
 
-delayJitterMs := 30      ; +/- ms added to each delay
-mouseJitterPx := 3       ; +/- px added to mouse targets
-pauseChance   := 8       ; % chance per event to insert a micro-pause
+delayJitterMs := 30      ;the ms added to each delay
+mouseJitterPx := 3       ;px mousejitter
+pauseChance   := 8       ;chance to insert a micro pause
 pauseMinMs    := 50
 pauseMaxMs    := 150
 
-curveMouse := true       ; move mouse in multiple steps instead of teleport
+curveMouse := true 
 curveMinSteps := 2
 curveMaxSteps := 6
 curveStepMinMs := 5
 curveStepMaxMs := 18
 
-fatigueMode := false     ; humanization grows gradually during playback
-fatigue := 0.0           ; 0..1
-fatigueStep := 0.003     ; added per event during playback (tune if you want)
-fatigueMax  := 1.0       ; cap
+fatigueMode := false    
+fatigue := 0.0          
+fatigueStep := 0.003    
+fatigueMax  := 1.0       
 
-; =========================
-; GUI CONTROLS (assigned later)
-; =========================
+
+;gui controlss
 statusText := ""
 countText  := ""
 
@@ -57,9 +54,7 @@ slPauseChance := ""
 slPauseMin := ""
 slPauseMax := ""
 
-; =========================
-; UI HELPERS
-; =========================
+
 UpdateStatus(text) {
     global statusText
     if IsObject(statusText)
@@ -80,9 +75,8 @@ Clamp(val, lo, hi) {
     return val
 }
 
-; =========================
-; HUMANIZATION HELPERS
-; =========================
+
+
 GetFatigueMultiplier() {
     global fatigueMode, fatigue
     return fatigueMode ? (1.0 + fatigue) : 1.0
@@ -144,14 +138,14 @@ HumanMouseMove(x, y) {
     dx := x - sx
     dy := y - sy
 
-    ; a little sideways drift to feel "human"
+    ;jst some sideways drift
     drift := Random(-10, 10)
     drift2 := Random(-10, 10)
 
     Loop steps {
         t := A_Index / steps
 
-        ; linear interpolation + small curve drift
+
         ix := Round(sx + dx * t + drift * (t * (1 - t)))
         iy := Round(sy + dy * t + drift2 * (t * (1 - t)))
 
@@ -159,7 +153,6 @@ HumanMouseMove(x, y) {
         Sleep(Random(curveStepMinMs, curveStepMaxMs))
     }
 
-    ; final snap to exact target (still humanized already)
     MouseMove(x, y, 0)
 }
 
@@ -170,9 +163,7 @@ AdvanceFatigue() {
     fatigue := Clamp(fatigue + fatigueStep, 0.0, fatigueMax)
 }
 
-; =========================
-; EMERGENCY STOP
-; =========================
+;EMERGENCY STOP
 EmergencyStop() {
     global recording, playing, stopPlay, ih
 
@@ -192,9 +183,8 @@ EmergencyStop() {
 
 Esc::EmergencyStop()
 
-; =========================
-; RECORD TOGGLE
-; =========================
+
+;toggle record
 ToggleRecord() {
     global recording, events, lastTime, ih, lastMX, lastMY, moveInterval
 
@@ -226,9 +216,7 @@ ToggleRecord() {
 
 F9::ToggleRecord()
 
-; =========================
-; SMART MOUSE MOVEMENT RECORDING
-; =========================
+
 RecordMouseMove() {
     global recording, events, lastTime, lastMX, lastMY, moveThreshold
     if !recording
@@ -247,9 +235,8 @@ RecordMouseMove() {
     lastMY := y
 }
 
-; =========================
-; KEYBOARD EVENTS
-; =========================
+
+;keyboard events
 KeyDown(ih, vk, sc) {
     global recording, events, lastTime
     if !recording
@@ -268,9 +255,8 @@ KeyUp(ih, vk, sc) {
     lastTime := now
 }
 
-; =========================
-; MOUSE BUTTONS
-; =========================
+
+;mouse buttons
 ~LButton::
 ~LButton Up::
 ~RButton::
@@ -302,9 +288,8 @@ KeyUp(ih, vk, sc) {
     lastTime := now
 }
 
-; =========================
-; PLAYBACK
-; =========================
+
+;playback
 PlayMacro() {
     global recording, playing, stopPlay, events
     global fatigue, fatigueMode
@@ -322,7 +307,7 @@ PlayMacro() {
     playing := true
     UpdateStatus("Playing")
 
-    ; reset fatigue each run
+    ;reset fatigue
     fatigue := 0.0
 
     for , e in events {
@@ -361,9 +346,7 @@ PlayMacro() {
 
 F10::PlayMacro()
 
-; =========================
-; SAVE / LOAD (INI)
-; =========================
+;saves and loads .ini file
 SaveMacro() {
     global events
     if events.Length = 0 {
@@ -443,9 +426,7 @@ LoadMacro() {
 F7::SaveMacro()
 F8::LoadMacro()
 
-; =========================
-; GUI (SETTINGS + CONTROLS)
-; =========================
+;gui settings
 SyncFromGui(*) {
     global humanize, curveMouse, fatigueMode
     global delayJitterMs, mouseJitterPx, pauseChance, pauseMinMs, pauseMaxMs
